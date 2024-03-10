@@ -35,9 +35,7 @@ func variableSaver(line string, visibilityLevel int) variable {
 }
 
 func Ex1() {
-	fmt.Printf("==================================================\n\n\t\t   INFO:\n\n")
-	fmt.Printf("This program is a Memory manager, \n")
-	fmt.Printf("If you wanna stop the program, say 'n'\n")
+	// beautiful shit
 	fmt.Printf("\n==================================================\n\n")
 
 	var willContinue string
@@ -50,14 +48,16 @@ func Ex1() {
 
 		stack := make([]map[string]variable, 0)
 
-		fmt.Printf("=====\n\n")
 		fmt.Printf("Enter the name of new file (with extension like .txt): ")
 		var fileName string
 		fmt.Scan(&fileName)
 
+		// end of beautiful shit
+
 		file, err := os.Open(fileName)
 		if err != nil {
 			fmt.Printf("ERROR: %v\n", err)
+
 		} else {
 			visibilityLevel = 0
 			stack = append(stack, make(map[string]variable))
@@ -68,44 +68,37 @@ func Ex1() {
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				line := scanner.Text()
+
 				if strings.Contains(line, "{") {
+					// Open new level
 					visibilityLevel++
 					stack = append(stack, make(map[string]variable))
+
 				} else if strings.Contains(line, "}") {
+					// Close level and drop all the variables
 					stack = stack[:len(stack)-1]
-
-					//to_delete := make([]string, 0)
-
-					/*for _, visLv := range stack {
-						for _, some_var := range visLv {
-							if some_var.VisibilityLevel == visibilityLevel {
-								//to_delete = append(to_delete, some_var.Name)
-								delete(visLv, some_var.Name)
-							}
-						}
-					}*/
-
-					/*for i := range to_delete {
-						delete(stack, to_delete[i])
-					}*/
-
 					if visibilityLevel > 0 {
 						visibilityLevel--
 					}
+
 				} else if strings.Contains(line, "=") {
+					// Save variable
 					newVar := variableSaver(line, visibilityLevel)
 					stack[visibilityLevel][newVar.Name] = newVar
+
 				} else if strings.Contains(line, "ShowVar") {
-					to_print := make([]string, 0)
+					// Show variables
+					to_print := make(map[string]int)
 					if len(stack) > 0 {
 						for _, visLv := range stack {
 							if len(visLv) > 0 {
 								for _, some_var := range visLv {
-									to_print = append(to_print, some_var.Name)
+									to_print[some_var.Name] = some_var.Value
 								}
 							}
 						}
 					}
+
 					if len(to_print) > 0 {
 						fmt.Printf("%v\n", to_print)
 					} else {
