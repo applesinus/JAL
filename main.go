@@ -1,16 +1,35 @@
 package main
 
-import "fmt"
+import (
+	ex1 "JAL/Ex1"
+	ex2 "JAL/Ex2"
+	"bufio"
+	"fmt"
+	"os"
+)
 
 func main() {
 	exercise := "none"
 	for exercise != "exit" && exercise != "-1" {
 		switch exercise {
+
 		case "1":
-			Ex1()
-		/*case "2":
-			Ex2()
-		case "3":
+			fmt.Printf("Enter the full path of the file: ")
+			var filePath string
+			scanner := bufio.NewScanner(os.Stdin)
+			scanner.Scan()
+			filePath = scanner.Text()
+			ex1.Ex1(filePath)
+
+		case "2":
+			fmt.Printf("Enter the full path of the file: ")
+			var filePath string
+			scanner := bufio.NewScanner(os.Stdin)
+			scanner.Scan()
+			filePath = scanner.Text()
+			ex2.Ex2(filePath)
+
+		/*case "3":
 			Ex3()
 		case "4":
 			Ex4()
@@ -27,11 +46,12 @@ func main() {
 		case "10":
 			Ex10()*/
 		case "big":
-			ExBig()
+			//ExBig.ExBig("kek.txt")
 		default:
 			fmt.Println("Invalid exercise number or command")
 		}
-		fmt.Println("Type here an exercise number or 'big' for the big one ('exit' or '-1' to exit):")
-		fmt.Scan(&exercise)
+
+		fmt.Println("\nType here an exercise number or 'big' for the big one ('exit' or '-1' to exit):")
+		fmt.Scanln(&exercise)
 	}
 }
