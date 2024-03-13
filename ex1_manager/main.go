@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	fmt.Printf("%v", os.Args)
 	if len(os.Args) <= 1 {
 		fmt.Printf("Couldn't find a file path\n")
 	} else {

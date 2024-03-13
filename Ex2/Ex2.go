@@ -1,5 +1,7 @@
 package ex1
 
+// test file on Linux: /home/dapar/Desktop/GitRepos/JAL/Ex2/Ex2_code.ex2
+
 import (
 	"bufio"
 	"fmt"
@@ -124,13 +126,14 @@ func assign(line_num int, line string, pile map[string]variable, functions map[s
 	in_brackets := 0
 
 	// calculating in-brackets values
-	for _, c := range line {
+	for i, c := range line {
 		switch c {
 		case '(':
 			in_brackets++
 		case ')':
 			in_brackets--
 			if in_brackets == 0 {
+				fmt.Printf("[%v:%v] Brackets line (%v): %v\n", line_num, i, in_brackets, brackets_line_bldr.String())
 				value, err := assign(line_num, brackets_line_bldr.String(), pile, functions)
 				if err {
 					return "", true
@@ -147,6 +150,7 @@ func assign(line_num int, line string, pile map[string]variable, functions map[s
 	}
 	// saving a line without brackets
 	line = final_bldr.String()
+	fmt.Printf("[%v] Excluded brackets: %v\n", line_num, line)
 
 	// calculating multiplication and division
 	right_side := false
@@ -222,12 +226,14 @@ func assign(line_num int, line string, pile map[string]variable, functions map[s
 	}
 	// saving a line without miltiplication and division
 	line = final_bldr.String()
+	fmt.Printf("[%v] Excluded * and /:%v\n", line_num, line)
 
 	return result, false
 }
 
 func Ex2(filePath string) {
-	file, err := os.Open(filePath)
+	//file, err := os.Open(filePath)
+	file, err := os.Open("/home/dapar/Desktop/GitRepos/JAL/Ex2/Ex2_code.ex2")
 
 	if err != nil {
 		fmt.Printf("Couldn't find the file \"%v\": %v\n", filePath, err)
