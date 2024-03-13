@@ -1,4 +1,4 @@
-package ex1
+package main
 
 // test file on Linux: /home/dapar/Desktop/GitRepos/JAL/Ex2/Ex2_code.ex2
 
@@ -9,12 +9,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-// Global pile of variables
-var pile map[string]variable
-
-// Global pile of functions
-var functions map[string]function
 
 // JALtype may be only:
 //
@@ -127,7 +121,124 @@ func get_value(line_num int, char_num int, expression string, pile map[string]va
 
 // Assigns the value to the variable. Can be recursive.
 func assign(line_num int, line string, pile map[string]variable, functions map[string]function) (string, bool) {
-	return "", false
+	var word_bldr, brackets_line_bldr, final_bldr strings.Builder
+	result := ""
+	in_brackets := 0
+
+	// calculating in-brackets values
+	for i, c := range line {
+		switch c {
+		case '(':
+			in_brackets++
+			if in_brackets != 1 {
+				brackets_line_bldr.Grow(1)
+				brackets_line_bldr.WriteRune(c)
+			}
+		case ')':
+			in_brackets--
+			if in_brackets == 0 {
+				fmt.Printf("[%v:%v] Brackets line (%v): %v\n", line_num, i, in_brackets, brackets_line_bldr.String())
+				value, err := assign(line_num, brackets_line_bldr.String(), pile, functions)
+				if err {
+					return "", true
+				}
+				final_bldr.WriteString(fmt.Sprintf("%v", value))
+				brackets_line_bldr.Reset()
+			} else {
+				brackets_line_bldr.Grow(1)
+				brackets_line_bldr.WriteRune(c)
+			}
+		default:
+			if in_brackets > 0 {
+				brackets_line_bldr.Grow(1)
+				brackets_line_bldr.WriteRune(c)
+			} else {
+				final_bldr.Grow(1)
+				final_bldr.WriteRune(c)
+			}
+		}
+	}
+	// saving a line without brackets
+	line = final_bldr.String()
+	fmt.Printf("[%v] Excluded brackets: %v\n", line_num, line)
+
+	// calculating multiplication and division
+	right_side := false
+	left_word, right_word := "", ""
+	final_bldr.Reset()
+	is_multiplication := false
+	for i, c := range line {
+		if !right_side {
+			if c == '*' || c == '/' {
+				// if it's a left factor or dividend
+				right_side = true
+				left_word = word_bldr.String()
+				word_bldr.Reset()
+				if c == '*' {
+					is_multiplication = true
+				} else {
+					is_multiplication = false
+				}
+			} else if c == '+' || c == '-' {
+				// if it's not a multiplied or divided
+				word_bldr.Grow(1)
+				word_bldr.WriteRune(c)
+				final_bldr.WriteString(word_bldr.String())
+				word_bldr.Reset()
+			} else {
+				// if word continues
+				word_bldr.Grow(1)
+				word_bldr.WriteRune(c)
+			}
+		} else {
+			if c == '*' || c == '/' || c == '+' || c == '-' {
+				// if it's a right factor or divisior
+				right_word = word_bldr.String()
+				word_bldr.Reset()
+
+				left_value := get_value(line_num, i, left_word, pile)
+				right_value := get_value(line_num, i, right_word, pile)
+				operation_result := ""
+				if left_value == nil || right_value == nil {
+					fmt.Printf("[line %v] Couldn't get value\n", line_num)
+					return "", true
+				} else {
+					if is_multiplication {
+						// if the operation is multiplication
+						operation_result = fmt.Sprintf("%v", left_value.(float64)*right_value.(float64))
+					} else {
+						// since it's not multiplication, it's division
+						operation_result = fmt.Sprintf("%v", left_value.(float64)/right_value.(float64))
+					}
+				}
+
+				// checking if the next operation is multiplication or division
+				if c == '*' || c == '/' {
+					// if there _WILL_ be multiplication or division
+					if c == '*' {
+						is_multiplication = true
+					} else {
+						is_multiplication = false
+					}
+					right_side = true
+					left_word = operation_result
+				} else {
+					// if there will _NOT_ be multiplication or division
+					final_bldr.WriteString(operation_result)
+				}
+
+			} else {
+				// if word continues
+				word_bldr.Grow(1)
+				word_bldr.WriteRune(c)
+			}
+		}
+	}
+	// saving a line without miltiplication and division
+	line = final_bldr.String()
+	fmt.Printf("[%v] Excluded * and /:%v\n", line_num, line)
+
+	return result, false
 }
 
 func Ex2(filePath string) {
@@ -137,9 +248,9 @@ func Ex2(filePath string) {
 	if err != nil {
 		fmt.Printf("Couldn't find the file \"%v\": %v\n", filePath, err)
 	} else {
-		pile = make(map[string]variable)
-		functions = make(map[string]function)
 		defer file.Close()
+		pile := make(map[string]variable)
+		functions := make(map[string]function)
 		line_num := 0
 
 		fmt.Printf("\nINTERPRETING FILE %v\n\n", filePath)
