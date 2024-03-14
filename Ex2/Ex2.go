@@ -35,8 +35,9 @@ type function struct {
 // Executes the function
 //
 // Returns the value of the function. Nil if there was an error
-func (f function) execute() interface{} {
-	return nil
+func (f function) execute() string {
+	var result string
+	return fmt.Sprintf("%v", result)
 }
 
 // Save_var returns true if there was an error
@@ -98,10 +99,11 @@ func function_saver(line_num int, line string, functions map[string]function) {
 	fmt.Printf("[line %v] Function \"%v\" created:\n%v\n", line_num, name_str, functions[name_str])
 }
 
-// Gets value from the pile or from the literal
-//
+// Gets value from the pile or from the literal.
 // Can return nil if there was an error or int, float values
-func get_value(line_num int, char_num int, expression string, pile map[string]variable) interface{} {
+//
+// TESTED FOR LITERAL, INT, FLOAT
+func get_value(line_num int, char_num int, expression string, pile map[string]variable) string {
 	var value interface{}
 	var err error
 	// Try to parse it as an int
@@ -112,7 +114,7 @@ func get_value(line_num int, char_num int, expression string, pile map[string]va
 		if err != nil {
 			// If it's not a float, try to get it from the pile
 			vrbl, exists := pile[expression]
-			if exists == false {
+			if !exists {
 				// If it's not in the pile, print an error
 				fmt.Printf("[line %v, char %v] Variable \"%v\" not found\n", line_num, char_num, expression)
 				value = nil
@@ -122,7 +124,88 @@ func get_value(line_num int, char_num int, expression string, pile map[string]va
 			}
 		}
 	}
-	return value
+	return fmt.Sprintf("%v", value)
+}
+
+func parse_word(expression string) string {
+	var result string
+
+	// Try to parse literal
+	num, err := strconv.ParseFloat(expression, 64)
+
+	// If it's not a literal, try to get a variable from the pile
+	if err != nil {
+		vrbl, exists := pile[expression]
+
+		// If it's not a variable, try to get a function
+		if !exists {
+			funct, exists := functions[expression]
+
+			// If it's not a function, return an error
+			if !exists {
+				return "ERROR"
+			} else { // TODO
+				// result is a function
+				result = funct.execute()
+			}
+		} else {
+			// result is a variable
+			result = fmt.Sprintf("%v", vrbl.value)
+		}
+	} else {
+		// result is a literal
+		result = fmt.Sprintf("%v", num)
+	}
+
+	return result
+}
+
+func parse_to_reverse_polish_notation(expression string, notation_type string) string {
+	switch notation_type {
+
+	case "postfix":
+		return expression
+
+	case "intfix":
+		// getting rid of spaces (harder to parse, but more universal)
+		expression = strings.ReplaceAll(expression, " ", "")
+
+		// getting rid of unary minuses (only for ex2-ex3)
+		for i := 0; i < len(expression); i++ {
+			if expression[i] == '-' && (i == 0 ||
+				expression[i-1] == '(' || expression[i-1] == ')' ||
+				expression[i-1] == '+' || expression[i-1] == '-' ||
+				expression[i-1] == '*' || expression[i-1] == '/') {
+
+				expression = expression[0:i] + "~" + expression[i:len(expression)]
+			}
+		}
+
+		// parsing
+		stack := make([]string, 0)
+		var word_builder strings.Builder
+		stack = append(stack, "(")
+
+		for _, c := range expression {
+			switch c {
+
+			case '-', '+', '*', '/', '(', ')':
+				word_on_left := word_builder.String()
+				word_builder.Reset()
+				word := parse_word(word_on_left)
+				if word != "ERROR" {
+					stack = append(stack, word_on_left)
+				} else {
+					return "ERROR"
+				}
+
+			default:
+				word_builder.Grow(1)
+				word_builder.WriteRune(c)
+			}
+		}
+	}
+
 }
 
 // Assigns the value to the variable. Can be recursive.
